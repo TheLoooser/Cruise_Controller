@@ -4,12 +4,27 @@
 package cruisecontroller;
 
 import CarSimulator.CarSimulator;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Application;
+import static javafx.application.Application.launch;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  *
  * @author Jonas Diesbach
  */
-public class CruiseController implements Runnable {
+public class CruiseController extends Application implements Runnable {
 
     /*working variables*/
     double lastTime = System.currentTimeMillis();
@@ -17,12 +32,64 @@ public class CruiseController implements Runnable {
     static double errSum, lastErr;
     static double kp, ki, kd;
 
+    HBox hbox = new HBox();
+    BorderPane root = new BorderPane();
+
     @Override
     public void run() {
-//        System.out.println("Hello from a thread!");
-//        Compute(50);
-//        System.out.println();
+    }
 
+    @Override
+    public void start(Stage stage) throws Exception {
+        //-----------LEFT PART-----------------
+        VBox vb = new VBox();
+        vb.setAlignment(Pos.TOP_CENTER);
+        Label lbl = new Label();
+        Button btn = new Button();
+        btn.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                lbl.setText("SUCCESS");
+            }
+        });
+
+        lbl.setText("blub");
+        vb.getChildren().add(lbl);
+        vb.getChildren().add(btn);
+        root.setLeft(vb);
+        //---------END OF LEFT PART-------------
+        //---------REMAINING PART--------------
+        stage.setTitle("Animated Line Chart Sample");
+//        init(stage);
+        Scene scene = new Scene(root, 600, 300);
+        stage.setScene(scene);
+        stage.show();
+        //--------END OF REMAINING-----------
+        CruiseController cc = new CruiseController();
+        int speed = 50;
+        SetTunings(0.3, 0.2, 0.2);
+
+        CarSimulator carSim = new CarSimulator();
+        (new Thread(carSim)).start();
+
+        //add timeline instead of while true
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(0.1), new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+//                System.out.println("this is called every 5 seconds on UI thread");
+                cc.Compute(carSim, speed);
+                System.out.println("Current Speed:" + carSim.getSpeed());
+            }
+        }));
+
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+
+//        while (true) {
+//            Thread.sleep(100);
+//            cc.Compute(carSim, speed);
+//            System.out.println("Current Speed:" + carSim.getSpeed());
+//        }
     }
 
     /**
@@ -30,28 +97,7 @@ public class CruiseController implements Runnable {
      */
     public static void main(String[] args) throws InterruptedException {
         // TODO code application logic here
-        CruiseController cc = new CruiseController();
-        int speed = 50;
-        SetTunings(0.3, 0.2, 0.2);
-//        CarSimulator carSim1 = new CarSimulator();
-
-//        while (carSim.getSpeed() < 20) {
-//            carSim.setAcceleration(10);
-//            System.out.println(carSim.getSpeed());
-//        }
-//        carSim.setAcceleration((double) 20.0);
-//        Thread.sleep(1000);
-        CarSimulator carSim = new CarSimulator();
-        (new Thread(carSim)).start();
-//        carSim.setAcceleration(20.0);
-
-//        System.out.println(carSim.getSpeed());
-        while (true) {
-            Thread.sleep(100);
-            cc.Compute(carSim, speed);
-//            carSim.setAcceleration(10);
-            System.out.println("Current Speed:" + carSim.getSpeed());
-        }
+        launch(args);
     }
 
     /*
