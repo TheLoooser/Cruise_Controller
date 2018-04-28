@@ -4,24 +4,14 @@
 package cruisecontroller;
 
 import CarSimulator.CarSimulator;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.util.regex.Pattern;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Application;
 import static javafx.application.Application.launch;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import javafx.util.Duration;
-import java.io.IOException;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -36,7 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -54,12 +43,12 @@ public class CruiseController extends Application implements Runnable {
     double lastTime = System.currentTimeMillis();
     static double Input, Output, Setpoint;
     static double errSum, lastErr;
-    static double kp = 0.3;
-    static double ki = 0.2;
-    static double kd = 0.2;
+    static double kp = 3.0;
+    static double ki = 0.35;
+    static double kd = 0.3;
 
     /* line chart variables */
-    private static final int MAX_DATA_POINTS = 50;
+    private static final int MAX_DATA_POINTS = 200;
     private int xSeriesData = 0;
     private XYChart.Series<Number, Number> series1 = new XYChart.Series<>();
     private XYChart.Series<Number, Number> series2 = new XYChart.Series<>();
@@ -73,6 +62,7 @@ public class CruiseController extends Application implements Runnable {
 
     HBox hbox = new HBox();
     BorderPane root = new BorderPane();
+    Dimension monitor = Toolkit.getDefaultToolkit().getScreenSize();
     //make speed a double???
     static int speed = 0;
 
@@ -114,7 +104,7 @@ public class CruiseController extends Application implements Runnable {
             }
         });
         //Textfield for constant kp
-        tfp.setText(String.valueOf(0.3));
+        tfp.setText(String.valueOf(kp));
         tfp.textProperty().addListener((observable, oldValue, newValue) -> {
             lbl.setText(newValue);
             if (newValue.equals("")) {
@@ -124,7 +114,7 @@ public class CruiseController extends Application implements Runnable {
             }
         });
         //Textfield for constant ki
-        tfi.setText(String.valueOf(0.2));
+        tfi.setText(String.valueOf(ki));
         tfi.textProperty().addListener((observable, oldValue, newValue) -> {
             lbl.setText(newValue);
             if (newValue.equals("")) {
@@ -134,7 +124,7 @@ public class CruiseController extends Application implements Runnable {
             }
         });
         //Textfield for constant kd
-        tfd.setText(String.valueOf(0.2));
+        tfd.setText(String.valueOf(kd));
         tfd.textProperty().addListener((observable, oldValue, newValue) -> {
             lbl.setText(newValue);
             if (newValue.equals("")) {
@@ -155,9 +145,9 @@ public class CruiseController extends Application implements Runnable {
         root.setLeft(vb);
         //---------END OF LEFT PART-------------
         //---------REMAINING PART--------------
-        stage.setTitle("Animated Line Chart Sample");
+        stage.setTitle("Car Simulation using a PID");
         init(stage);
-        Scene scene = new Scene(root, 600, 300);
+        Scene scene = new Scene(root, monitor.width * 0.9, monitor.height * 0.9);
         stage.setScene(scene);
         stage.show();
         //--------END OF REMAINING-----------
@@ -166,13 +156,10 @@ public class CruiseController extends Application implements Runnable {
         (new Thread(carSim)).start();
 
         //add timeline instead of while true
-        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(0.1), new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-//                System.out.println("this is called every 5 seconds on UI thread");
-                cc.Compute(carSim, speed);
-                System.out.println("Current Speed:" + carSim.getSpeed());
-            }
+        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(0.1), (ActionEvent event) -> {
+            //                System.out.println("this is called every 5 seconds on UI thread");
+            cc.Compute(carSim, speed);
+            System.out.println("Current Speed:" + carSim.getSpeed());
         }));
 
         timeline.setCycleCount(Timeline.INDEFINITE);
@@ -267,19 +254,19 @@ public class CruiseController extends Application implements Runnable {
         };
 
         lineChart.setAnimated(false);
-        lineChart.setTitle("Animated Line Chart");
+        lineChart.setTitle("PID in Action");
         lineChart.setHorizontalGridLinesVisible(true);
 
         // Set Name for Series
-        series1.setName("Series 1");
-        series2.setName("Series 2");
+        series1.setName("Desired Speed");
+        series2.setName("Actual Speed");
         series3.setName("Series 3");
 
         // Add Chart Series
         lineChart.getData().addAll(series1, series2, series3);
 
 //        primaryStage.setScene(new Scene(lineChart));
-        root.setRight(lineChart);
+        root.setCenter(lineChart);
     }
 
     private class AddToQueue implements Runnable {
@@ -287,11 +274,11 @@ public class CruiseController extends Application implements Runnable {
         public void run() {
             try {
                 // add a item of random data to queue
-                dataQ1.add(Math.random());
-                dataQ2.add(Math.random());
-                dataQ3.add(Math.random());
+                dataQ1.add(speed);
+                dataQ2.add(Input);
+                dataQ3.add(0);
 
-                Thread.sleep(500);
+                Thread.sleep(100);
                 executor.execute(this);
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
