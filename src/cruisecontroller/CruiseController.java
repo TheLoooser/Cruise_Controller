@@ -4,6 +4,7 @@
 package cruisecontroller;
 
 import CarSimulator.CarSimulator;
+import java.util.regex.Pattern;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -37,6 +38,7 @@ public class CruiseController extends Application implements Runnable {
 
     HBox hbox = new HBox();
     BorderPane root = new BorderPane();
+    //make speed a double???
     static int speed = 0;
 
     @Override
@@ -62,11 +64,18 @@ public class CruiseController extends Application implements Runnable {
         });
         //Textfield for the desired speed
         tf.textProperty().addListener((observable, oldValue, newValue) -> {
+            boolean isInteger = Pattern.matches("[0-9]*(\\.[0-9]*)?", newValue);
+//            if(isInteger){
+//                System.out.println("Success");
+//            }
             lbl.setText(newValue);
-            if (newValue.equals("")) {
+            if (!isInteger || newValue.equals("")) {
+                //the speed doesn't necessarily need to be set back to zero
                 speed = 0;
+                lbl.setText("NAN");
             } else {
-                speed = Integer.valueOf(newValue);
+                double d = Double.valueOf(newValue);
+                speed = (int) d;
             }
         });
         //Textfield for constant kp
@@ -112,15 +121,12 @@ public class CruiseController extends Application implements Runnable {
         //---------END OF LEFT PART-------------
         //---------REMAINING PART--------------
         stage.setTitle("Animated Line Chart Sample");
-//        init(stage);
         Scene scene = new Scene(root, 600, 300);
         stage.setScene(scene);
         stage.show();
         //--------END OF REMAINING-----------
+        
         CruiseController cc = new CruiseController();
-//        int speed = 50;
-//        SetTunings(0.3, 0.2, 0.2);
-        SetTunings(kp, ki, kd);
         CarSimulator carSim = new CarSimulator();
         (new Thread(carSim)).start();
 
@@ -137,11 +143,6 @@ public class CruiseController extends Application implements Runnable {
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
 
-//        while (true) {
-//            Thread.sleep(100);
-//            cc.Compute(carSim, speed);
-//            System.out.println("Current Speed:" + carSim.getSpeed());
-//        }
         //handles the window closing event, stops simulation
         scene.getWindow().setOnCloseRequest(new EventHandler<javafx.stage.WindowEvent>() {
             @Override
@@ -166,23 +167,20 @@ public class CruiseController extends Application implements Runnable {
         /*How long since we last calculated*/
         long now = System.currentTimeMillis();
         double timeChange = (double) (now - lastTime) / 1000;
-        System.out.println("timechange:" + timeChange);
+//        System.out.println("timechange:" + timeChange);
 
         /*Compute all the working error variables*/
         Input = carSim.getSpeed();
         Setpoint = speed;
         double error = Setpoint - Input;
-        System.out.println("Error: " + error);
+//        System.out.println("Error: " + error);
         errSum += (error * timeChange);
-        System.out.println("ErrSum: " + errSum);
+//        System.out.println("ErrSum: " + errSum);
         double dErr = (error - lastErr) / timeChange;
 
         /*Compute PID Output*/
         Output = kp * error + ki * errSum + kd * dErr;
-//        System.out.println("error: " + error + " errSum: " + errSum + " dErr: " + dErr);
-//        System.out.println("Kp: " + kp + " Ki: " + ki + " Kd: " + kd);
-//        System.out.println(ki * errSum);
-        System.out.println("Output: " + Output);
+//        System.out.println("Output: " + Output);
         carSim.setAcceleration(Output);
 
         /*Remember some variables for next time*/
