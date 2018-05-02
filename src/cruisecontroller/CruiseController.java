@@ -25,11 +25,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
@@ -37,10 +40,10 @@ import javafx.scene.layout.VBox;
  *
  * @author Jonas Diesbach
  */
-public class CruiseController extends Application implements Runnable {
+public class CruiseController extends Application {
 
     /* line chart variables */
-    private static final int MAX_DATA_POINTS = 800;
+    private static final int MAX_DATA_POINTS = 500;
     private int xSeriesData = 0;
     private XYChart.Series<Number, Number> series1 = new XYChart.Series<>();
     private XYChart.Series<Number, Number> series2 = new XYChart.Series<>();
@@ -54,29 +57,32 @@ public class CruiseController extends Application implements Runnable {
 
     BorderPane root = new BorderPane();
     Dimension monitor = Toolkit.getDefaultToolkit().getScreenSize();
-    //make speed a double???
-    static double speed = 0;
-
-    @Override
-    public void run() {
-    }
+    static double speed = 13.9; //equals 50km/h
 
     @Override
     public void start(Stage stage) throws Exception {
-        SetSampleTime(50);
+        SetSampleTime(25);
         kp = 3.0;
         ki = 0.35;
         kd = 0.3;
         SetControllerDirection(0);
         SetMode(1);
 //        SetTunings(3.0, 0.35, 0.3);
-        SetOutputLimits(-100, 100);
+
+        /*
+        Acceleration: https://www.engadget.com/2017/02/07/tesla-model-s-ludicrous-acceleration-record/
+        Breaking: http://www.motortrend.com/news/20-best-60-to-0-distances-recorded/
+         */
+        SetOutputLimits(-26.226, 11.78);
 
         //-----------LEFT PART-----------------
         VBox vb = new VBox();
         vb.setAlignment(Pos.TOP_CENTER);
         Label lbl = new Label();
         Button btn = new Button();
+        Slider sl = new Slider();
+        sl.setMin(0);
+        sl.setMax(124); //https://en.wikipedia.org/wiki/Production_car_speed_record even though the simulation can only go up to about 108m/s
         TextField tf = new TextField();
         TextField tfp = new TextField();
         TextField tfi = new TextField();
@@ -87,6 +93,15 @@ public class CruiseController extends Application implements Runnable {
                 lbl.setText("SUCCESS");
             }
         });
+        sl.valueProperty().addListener(new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                lbl.setText(String.valueOf(newValue));
+                speed = (double) newValue;
+                tf.setText(String.valueOf(speed));
+            }
+        });
+
         //Textfield for the desired speed
         tf.textProperty().addListener((observable, oldValue, newValue) -> {
             boolean isInteger = Pattern.matches("[0-9]*(\\.[0-9]*)?", newValue);
@@ -100,9 +115,10 @@ public class CruiseController extends Application implements Runnable {
                 lbl.setText("NAN");
             } else {
                 double d = Double.valueOf(newValue);
-                speed = (int) d;
+                speed = d;
             }
         });
+
         //Textfield for constant kp
         tfp.setText(String.valueOf(kp));
         tfp.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -138,6 +154,7 @@ public class CruiseController extends Application implements Runnable {
         btn.setText("Button");
         vb.getChildren().add(lbl);
         vb.getChildren().add(btn);
+        vb.getChildren().add(sl);
         vb.getChildren().add(tf);
         vb.getChildren().add(tfp);
         vb.getChildren().add(tfi);
@@ -152,13 +169,13 @@ public class CruiseController extends Application implements Runnable {
         stage.show();
         //--------END OF REMAINING-----------
         //--------START OF PID-----------
-        SetTunings(3.0, 0.35, 0.3);
+        SetTunings(10, 0.1, 0);
         CarSimulator carSim = new CarSimulator();
         (new Thread(carSim)).start();
 
         //add timeline instead of while true
         Timeline timeline;
-        timeline = new Timeline(new KeyFrame(Duration.millis(50), new EventHandler<ActionEvent>() {
+        timeline = new Timeline(new KeyFrame(Duration.millis(25), new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 //                System.out.println("this is called every 5 seconds on UI thread");
@@ -247,9 +264,10 @@ public class CruiseController extends Application implements Runnable {
                 // add a item of random data to queue
                 dataQ1.add(speed);
                 dataQ2.add(Input);
-                dataQ3.add(Setpoint - Input);
+//                dataQ3.add(Setpoint - Input);
+                dataQ3.add(Output);
 
-                Thread.sleep(100);
+                Thread.sleep(50);
                 executor.execute(this);
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
