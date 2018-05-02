@@ -1,5 +1,5 @@
 /*
- * Hopefully this file wont stay long in the dev branch
+ * Hopefully this file wont stay long in the test branch
  */
 package cruisecontroller;
 
