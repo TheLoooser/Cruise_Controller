@@ -23,7 +23,7 @@ public class SimplePID {
     private static final int REVERSE = 1;
     private static int controllerDirection = DIRECT;
 
-    public static void Compute(CarSimulator carSim, int speed) {
+    public static void Compute(CarSimulator carSim, double speed) {
         if (!inAuto) {
             return;
         }

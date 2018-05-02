@@ -4,6 +4,7 @@
 package cruisecontroller;
 
 import CarSimulator.CarSimulator;
+import static cruisecontroller.SimplePID.*;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.regex.Pattern;
@@ -30,7 +31,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 /**
@@ -39,16 +39,8 @@ import javafx.scene.layout.VBox;
  */
 public class CruiseController extends Application implements Runnable {
 
-    /*working variables*/
-    double lastTime = System.currentTimeMillis();
-    static double Input, Output, Setpoint;
-    static double errSum, lastErr;
-    static double kp = 3.0;
-    static double ki = 0.35;
-    static double kd = 0.3;
-
     /* line chart variables */
-    private static final int MAX_DATA_POINTS = 200;
+    private static final int MAX_DATA_POINTS = 800;
     private int xSeriesData = 0;
     private XYChart.Series<Number, Number> series1 = new XYChart.Series<>();
     private XYChart.Series<Number, Number> series2 = new XYChart.Series<>();
@@ -60,11 +52,10 @@ public class CruiseController extends Application implements Runnable {
 
     private NumberAxis xAxis;
 
-    HBox hbox = new HBox();
     BorderPane root = new BorderPane();
     Dimension monitor = Toolkit.getDefaultToolkit().getScreenSize();
     //make speed a double???
-    static int speed = 0;
+    static double speed = 0;
 
     @Override
     public void run() {
@@ -72,6 +63,15 @@ public class CruiseController extends Application implements Runnable {
 
     @Override
     public void start(Stage stage) throws Exception {
+        SetSampleTime(50);
+        kp = 3.0;
+        ki = 0.35;
+        kd = 0.3;
+        SetControllerDirection(0);
+        SetMode(1);
+//        SetTunings(3.0, 0.35, 0.3);
+        SetOutputLimits(-100, 100);
+
         //-----------LEFT PART-----------------
         VBox vb = new VBox();
         vb.setAlignment(Pos.TOP_CENTER);
@@ -151,19 +151,25 @@ public class CruiseController extends Application implements Runnable {
         stage.setScene(scene);
         stage.show();
         //--------END OF REMAINING-----------
-        CruiseController cc = new CruiseController();
+        //--------START OF PID-----------
+        SetTunings(3.0, 0.35, 0.3);
         CarSimulator carSim = new CarSimulator();
         (new Thread(carSim)).start();
 
         //add timeline instead of while true
-        Timeline timeline = new Timeline(new KeyFrame(Duration.seconds(0.1), (ActionEvent event) -> {
-            //                System.out.println("this is called every 5 seconds on UI thread");
-            cc.Compute(carSim, speed);
-            System.out.println("Current Speed:" + carSim.getSpeed());
+        Timeline timeline;
+        timeline = new Timeline(new KeyFrame(Duration.millis(50), new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                //                System.out.println("this is called every 5 seconds on UI thread");
+                Compute(carSim, speed);
+                System.out.println("Current Speed:" + carSim.getSpeed());
+            }
         }));
 
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
+        //---------END OF PID------------
 
         //-------LINE CHART----------------
         executor = Executors.newCachedThreadPool(new ThreadFactory() {
@@ -198,41 +204,6 @@ public class CruiseController extends Application implements Runnable {
         launch(args);
     }
 
-    /*
-    http://brettbeauregard.com/blog/2011/04/improving-the-beginners-pid-introduction/
-     */
-    public void Compute(CarSimulator carSim, double speed) {
-        /*How long since we last calculated*/
-        long now = System.currentTimeMillis();
-        double timeChange = (double) (now - lastTime) / 1000;
-//        System.out.println("timechange:" + timeChange);
-
-        /*Compute all the working error variables*/
-        Input = carSim.getSpeed();
-        Setpoint = speed;
-        double error = Setpoint - Input;
-//        System.out.println("Error: " + error);
-        errSum += (error * timeChange);
-//        System.out.println("ErrSum: " + errSum);
-        double dErr = (error - lastErr) / timeChange;
-
-        /*Compute PID Output*/
-        Output = kp * error + ki * errSum + kd * dErr;
-//        System.out.println("Output: " + Output);
-        carSim.setAcceleration(Output);
-
-        /*Remember some variables for next time*/
-        lastErr = error;
-        lastTime = now;
-    }
-
-    //this function shouldn't even be necessary
-    public static void SetTunings(double Kp, double Ki, double Kd) {
-        kp = Kp;
-        ki = Ki;
-        kd = Kd;
-    }
-
     //----------------------LINE CHART---------------------
     private void init(Stage primaryStage) {
 
@@ -260,7 +231,7 @@ public class CruiseController extends Application implements Runnable {
         // Set Name for Series
         series1.setName("Desired Speed");
         series2.setName("Actual Speed");
-        series3.setName("Series 3");
+        series3.setName("Error");
 
         // Add Chart Series
         lineChart.getData().addAll(series1, series2, series3);
@@ -276,7 +247,7 @@ public class CruiseController extends Application implements Runnable {
                 // add a item of random data to queue
                 dataQ1.add(speed);
                 dataQ2.add(Input);
-                dataQ3.add(0);
+                dataQ3.add(Setpoint - Input);
 
                 Thread.sleep(100);
                 executor.execute(this);
