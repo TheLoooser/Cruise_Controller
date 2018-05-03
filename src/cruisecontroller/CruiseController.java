@@ -5,6 +5,7 @@ package cruisecontroller;
 
 import CarSimulator.CarSimulator;
 import static cruisecontroller.SimplePID.*;
+import static cruisecontroller.LineChart.*;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.regex.Pattern;
@@ -43,6 +44,7 @@ import javafx.scene.layout.VBox;
 public class CruiseController extends Application {
 
     /* line chart variables */
+ /*
     private static final int MAX_DATA_POINTS = 500;
     private int xSeriesData = 0;
     private XYChart.Series<Number, Number> series1 = new XYChart.Series<>();
@@ -54,8 +56,9 @@ public class CruiseController extends Application {
     private ConcurrentLinkedQueue<Number> dataQ3 = new ConcurrentLinkedQueue<>();
 
     private NumberAxis xAxis;
-
-    BorderPane root = new BorderPane();
+     */
+    
+    static BorderPane root = new BorderPane();
     Dimension monitor = Toolkit.getDefaultToolkit().getScreenSize();
     static double speed = 13.9; //equals 50km/h
 
@@ -163,13 +166,14 @@ public class CruiseController extends Application {
         //---------END OF LEFT PART-------------
         //---------REMAINING PART--------------
         stage.setTitle("Car Simulation using a PID");
-        init(stage);
+        initil(stage);
         Scene scene = new Scene(root, monitor.width * 0.9, monitor.height * 0.9);
         stage.setScene(scene);
         stage.show();
         //--------END OF REMAINING-----------
         //--------START OF PID-----------
-        SetTunings(10, 0.1, 0);
+        //good values: 30 8 0.5, 15, 2, 0.1
+        SetTunings(30, 5, 0.01);
         CarSimulator carSim = new CarSimulator();
         (new Thread(carSim)).start();
 
@@ -221,6 +225,7 @@ public class CruiseController extends Application {
         launch(args);
     }
 
+    /*
     //----------------------LINE CHART---------------------
     private void init(Stage primaryStage) {
 
@@ -310,5 +315,5 @@ public class CruiseController extends Application {
         xAxis.setUpperBound(xSeriesData - 1);
     }
     //----------------------END OF LINE CHART--------------
-
+     */
 }
