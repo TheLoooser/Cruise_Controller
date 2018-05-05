@@ -71,7 +71,7 @@ public class CruiseController extends Application {
         vb.setAlignment(Pos.CENTER_LEFT);
         vb.setPadding(new Insets(15, 12, 15, 12));
         vb.setSpacing(15);
-        DecimalFormat df = new DecimalFormat("#.00000");
+        DecimalFormat df = new DecimalFormat("#0.00000");
         Label lbl_err = new Label();
         Label lbl_desspeed = new Label();
         Label lbl_actspeed = new Label();
