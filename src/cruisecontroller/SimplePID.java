@@ -23,7 +23,7 @@ public class SimplePID {
     private static final int REVERSE = 1;
     private static int controllerDirection = DIRECT;
 
-    private static double data[] = new double[10];
+    private static double data[] = new double[200];
     private static int index = 0;
 
     public static void Compute(CarSimulator carSim, double speed) {
@@ -39,9 +39,9 @@ public class SimplePID {
             double error = Setpoint - Input;
             /*-----------------------------*/
             data[index] = error; //prop. error
-            index = ++index % 10;
+            index = ++index % 200;
             ITerm = 0;
-            for (int i = 0; i < 10; i++  ) {
+            for (int i = 0; i < 200; i++  ) {
                 ITerm += (ki * data[i]);
             }
 //            ITerm = ITerm * ki;
@@ -70,7 +70,7 @@ public class SimplePID {
                 Output = outMin;
             }
             carSim.setAcceleration(Output);
-            System.out.println(carSim.getSpeed());
+//            System.out.println(carSim.getSpeed());
 
             /*Remember some variables for next time*/
             lastInput = Input;
