@@ -82,7 +82,7 @@ public class CruiseController extends Application {
         Button btn = new Button();
         Slider sl = new Slider();
         sl.setMin(0);
-        sl.setMax(124); //https://en.wikipedia.org/wiki/Production_car_speed_record even though the simulation can only go up to about 115m/s
+        sl.setMax(124); //https://en.wikipedia.org/wiki/Production_car_speed_record even though the simulation can only go up to about 115m/s tops
         TextField tf = new TextField();
         TextField tfp = new TextField();
         TextField tfi = new TextField();
@@ -99,7 +99,7 @@ public class CruiseController extends Application {
         //Textfield for the desired speed
         tf.textProperty().addListener((observable, oldValue, newValue) -> {
             boolean isInteger = Pattern.matches("[0-9]*(\\.[0-9]*)?", newValue);
-            
+
             if (!isInteger || newValue.equals("")) {
                 lbl_desspeed.setText("Desired Speed: NAN");
             } else {
@@ -148,7 +148,7 @@ public class CruiseController extends Application {
         vb.getChildren().add(lbl_actspeed);
         lbl_err.setText("Error: " + df.format(speed));
         vb.getChildren().add(lbl_err);
-        lbl_setSpeed.setText("Choose your Speed: ");
+        lbl_setSpeed.setText("Choose your Speed (m/s): ");
         vb.getChildren().add(lbl_setSpeed);
         vb.getChildren().add(sl);
         vb.getChildren().add(tf);
@@ -162,7 +162,7 @@ public class CruiseController extends Application {
         lbl_kd.setAlignment(Pos.CENTER_LEFT);
         vb.getChildren().add(lbl_kd);
         vb.getChildren().add(tfd);
-        vb.setPrefWidth(monitor.width *0.1);
+        vb.setPrefWidth(monitor.width * 0.1);
         root.setLeft(vb);
         //---------END OF LEFT PART-------------
         //---------REMAINING PART--------------
@@ -178,7 +178,8 @@ public class CruiseController extends Application {
 //        SetTunings(30, 5, 0.01);
         //best values so far: 11, 0.0015, 0.3
         //best values for acc = break = 26.266: 25, 0.5, 2
-        SetTunings(10, 0.15, 0.01);
+//        SetTunings(10, 0.15, 0.01);
+        SetTunings(10.5, 0.165, 0.02);
         CarSimulator carSim = new CarSimulator();
         (new Thread(carSim)).start();
 
