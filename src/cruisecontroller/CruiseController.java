@@ -73,7 +73,8 @@ public class CruiseController extends Application {
         Acceleration: https://www.engadget.com/2017/02/07/tesla-model-s-ludicrous-acceleration-record/
         Breaking: http://www.motortrend.com/news/20-best-60-to-0-distances-recorded/
          */
-        SetOutputLimits(-26.226, 11.78);
+//        SetOutputLimits(-26.226, 11.78);
+        SetOutputLimits(-26.226, 26.226);
 
         //-----------LEFT PART-----------------
         VBox vb = new VBox();
@@ -82,7 +83,7 @@ public class CruiseController extends Application {
         Button btn = new Button();
         Slider sl = new Slider();
         sl.setMin(0);
-        sl.setMax(124); //https://en.wikipedia.org/wiki/Production_car_speed_record even though the simulation can only go up to about 108m/s
+        sl.setMax(124); //https://en.wikipedia.org/wiki/Production_car_speed_record even though the simulation can only go up to about 115m/s
         TextField tf = new TextField();
         TextField tfp = new TextField();
         TextField tfi = new TextField();
@@ -122,31 +123,37 @@ public class CruiseController extends Application {
         //Textfield for constant kp
         tfp.setText(String.valueOf(kp));
         tfp.textProperty().addListener((observable, oldValue, newValue) -> {
+            boolean isInteger = Pattern.matches("[0-9]*(\\.[0-9]*)?", newValue);
             lbl.setText(newValue);
-            if (newValue.equals("")) {
+            if (!isInteger || newValue.equals("")) {
                 kp = 0;
             } else {
-                kp = Double.valueOf(newValue);
+                double d = Double.valueOf(newValue);
+                kp = d;
             }
         });
         //Textfield for constant ki
         tfi.setText(String.valueOf(ki));
         tfi.textProperty().addListener((observable, oldValue, newValue) -> {
+            boolean isInteger = Pattern.matches("[0-9]*(\\.[0-9]*)?", newValue);
             lbl.setText(newValue);
-            if (newValue.equals("")) {
+            if (!isInteger || newValue.equals("")) {
                 ki = 0;
             } else {
-                ki = Double.valueOf(newValue);
+                double d = Double.valueOf(newValue);
+                ki = d;
             }
         });
         //Textfield for constant kd
         tfd.setText(String.valueOf(kd));
         tfd.textProperty().addListener((observable, oldValue, newValue) -> {
+            boolean isInteger = Pattern.matches("[0-9]*(\\.[0-9]*)?", newValue);
             lbl.setText(newValue);
-            if (newValue.equals("")) {
+            if (!isInteger || newValue.equals("")) {
                 kd = 0;
             } else {
-                kd = Double.valueOf(newValue);
+                double d = Double.valueOf(newValue);
+                kd = d;
             }
         });
 
@@ -169,6 +176,8 @@ public class CruiseController extends Application {
         stage.show();
         //--------END OF REMAINING-----------
         //--------START OF PID-----------
+        //best values so far: 11, 0.0015, 0.3
+        //best values for acc = break = 26.266: 25, 0.5, 2
         SetTunings(10, 0.1, 0);
         CarSimulator carSim = new CarSimulator();
         (new Thread(carSim)).start();
@@ -180,6 +189,7 @@ public class CruiseController extends Application {
             public void handle(ActionEvent event) {
                 //                System.out.println("this is called every 5 seconds on UI thread");
                 Compute(carSim, speed);
+                lbl.setText(String.valueOf(carSim.getSpeed()));
                 System.out.println("Current Speed:" + carSim.getSpeed());
             }
         }));
