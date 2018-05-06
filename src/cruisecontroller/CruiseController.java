@@ -38,6 +38,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
 /**
  *
@@ -79,10 +80,46 @@ public class CruiseController extends Application {
         Label lbl_ki = new Label();
         Label lbl_kd = new Label();
         Label lbl_setSpeed = new Label();
+        Label lbl_setSpeed2 = new Label();
         Button btn = new Button();
         Slider sl = new Slider();
         sl.setMin(0);
         sl.setMax(124); //https://en.wikipedia.org/wiki/Production_car_speed_record even though the simulation can only go up to about 115m/s tops
+        sl.setValue(speed);
+        sl.setMinorTickCount(0);
+        sl.setMajorTickUnit(12.4);
+        sl.setShowTickMarks(true);
+        sl.setShowTickLabels(true);
+        sl.setLabelFormatter(new StringConverter<Double>() {
+            @Override
+            public String toString(Double n) {
+                if (n < 10) return "0";
+                if (n < 15) return "50";
+                if (n < 23) return "80";
+                if (n < 35) return "120";
+                if (n >= 124.0) return "446";
+                return "";
+            }
+
+            @Override
+            public Double fromString(String s) {
+                switch (s) {
+                    case "0":
+                        return 0d;
+                    case "50":
+                        return 1d;
+                    case "80":
+                        return 2d;
+                    case "120":
+                        return 3d;
+                    case "446":
+                        return 4d;
+
+                    default:
+                        return 1d;
+                }
+            }
+        });
         TextField tf = new TextField();
         TextField tfp = new TextField();
         TextField tfi = new TextField();
@@ -148,9 +185,11 @@ public class CruiseController extends Application {
         vb.getChildren().add(lbl_actspeed);
         lbl_err.setText("Error: " + df.format(speed));
         vb.getChildren().add(lbl_err);
+        lbl_setSpeed2.setText("Choose your Speed (km/h): ");
+        vb.getChildren().add(lbl_setSpeed2);
+        vb.getChildren().add(sl);
         lbl_setSpeed.setText("Choose your Speed (m/s): ");
         vb.getChildren().add(lbl_setSpeed);
-        vb.getChildren().add(sl);
         vb.getChildren().add(tf);
         lbl_kp.setText("Kp: ");
         vb.getChildren().add(lbl_kp);
